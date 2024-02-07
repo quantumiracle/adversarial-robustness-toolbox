@@ -15,3 +15,4 @@ from art.defences.trainer.adversarial_trainer_awp_pytorch import AdversarialTrai
 from art.defences.trainer.adversarial_trainer_oaat import AdversarialTrainerOAAT
 from art.defences.trainer.adversarial_trainer_oaat_pytorch import AdversarialTrainerOAATPyTorch
 from art.defences.trainer.dp_instahide_trainer import DPInstaHideTrainer
+from art.defences.trainer.adversarial_trainer_ba_pytorch import AdversarialTrainerBAPyTorch

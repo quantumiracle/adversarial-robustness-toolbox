@@ -846,6 +846,7 @@ class PyTorchClassifier(ClassGradientsMixin, ClassifierMixin, PyTorchEstimator):
         # Compute the gradient and return
         model_outputs = self._model(inputs_t)
         loss = self._loss(model_outputs[-1], labels_t)
+        loss = loss.mean()  # in case with reduction
 
         # Clean gradients
         self._model.zero_grad()
@@ -874,6 +875,7 @@ class PyTorchClassifier(ClassGradientsMixin, ClassifierMixin, PyTorchEstimator):
         assert grads.shape == x.shape
 
         return grads
+
 
     def custom_loss_gradient(  # pylint: disable=W0221
         self,
