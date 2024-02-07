@@ -214,7 +214,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         :param y_batch: batch of y.
         :param l_r: learning rate for the optimisation step.
         """
-        h  =  1.
+        h_delta  =  0.1
         import torch
 
         if self._classifier._optimizer is None:  # pylint: disable=W0212
@@ -223,7 +223,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         # delta update
         delta_grad = self._classifier.loss_gradient(x_batch + self.delta, y_batch)
         noise = np.random.normal(loc=0, scale=1, size=delta_grad.shape)
-        self.delta = np.clip(self.delta + h * delta_grad + np.sqrt(h) * noise, -self._eps, +self._eps).astype(np.float32)
+        self.delta = np.clip(self.delta + h_delta * delta_grad + np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
 
         # theta update
         if self._classifier.clip_values is not None:
