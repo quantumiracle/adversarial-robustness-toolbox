@@ -214,7 +214,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         :param y_batch: batch of y.
         :param l_r: learning rate for the optimisation step.
         """
-        h  =  1e-4
+        h  =  1.
         import torch
 
         if self._classifier._optimizer is None:  # pylint: disable=W0212
