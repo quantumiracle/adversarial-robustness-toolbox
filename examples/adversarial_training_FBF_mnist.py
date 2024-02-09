@@ -152,7 +152,8 @@ x_train = x_train.transpose(0, 3, 1, 2).astype("float32")
 x_test = x_test.transpose(0, 3, 1, 2).astype("float32")
 
 transform = transforms.Compose(
-    [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+    # [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+    [transforms.ToTensor()]
 )
 
 dataset = MNIST_dataset(x_train, y_train, transform=transform)
@@ -175,10 +176,18 @@ opt = torch.optim.SGD(model.parameters(), lr=0.21, momentum=0.9, weight_decay=5e
 criterion = nn.CrossEntropyLoss()
 # Step 3: Create the ART classifier
 
+
+mnist_mu = np.ones((1, 28, 28))
+mnist_mu[0, :, :] = 0.1307
+
+mnist_std = np.ones((1, 28, 28))
+mnist_std[0, :, :] = 0.3081
+
+
 classifier = PyTorchClassifier(
     model=model,
     clip_values=(0.0, 1.0),
-    # preprocessing=(cifar_mu, cifar_std),
+    preprocessing=(mnist_mu, mnist_std),
     loss=criterion,
     optimizer=opt,
     input_shape=(1, 28, 28),
@@ -188,8 +197,8 @@ classifier = PyTorchClassifier(
 attack = ProjectedGradientDescent(
     classifier,
     norm=np.inf,
-    eps=8.0 / 255.0,
-    eps_step=2.0 / 255.0,
+    eps=0.3,
+    eps_step=0.01,
     max_iter=40,
     targeted=False,
     num_random_init=5,
@@ -198,7 +207,7 @@ attack = ProjectedGradientDescent(
 
 # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
 # if you have apex installed, change use_amp to True
-epsilon = 8.0 / 255.0
+epsilon = 0.3
 trainer = AdversarialTrainerFBFPyTorch(classifier, eps=epsilon, use_amp=False)
 
 # Build a Keras image augmentation object and wrap it in ART
