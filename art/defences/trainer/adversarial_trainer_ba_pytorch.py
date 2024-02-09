@@ -214,7 +214,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         :param y_batch: batch of y.
         :param l_r: learning rate for the optimisation step.
         """
-        h_delta  =  0.1
+        h_delta  =  1.25 * self._eps
         import torch
 
         if self._classifier._optimizer is None:  # pylint: disable=W0212
@@ -230,8 +230,6 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
             x_batch_pert = np.clip(x_batch + self.delta, self._classifier.clip_values[0], self._classifier.clip_values[1])
         else:
             x_batch_pert = x_batch + self.delta
-
-        # import pdb; pdb.set_trace()
 
         # Apply preprocessing
         x_preprocessed, y_preprocessed = self._classifier._apply_preprocessing(  # pylint: disable=W0212
