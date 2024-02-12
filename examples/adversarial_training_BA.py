@@ -216,7 +216,7 @@ trainer = AdversarialTrainerBAPyTorch(classifier, eps=epsilon, use_amp=False)
 art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
 
 # Step 5: fit the trainer
-trainer.fit_generator(art_datagen, nb_epochs=30)
+trainer.fit_generator(art_datagen, nb_epochs=300)
 
 x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
 print(
