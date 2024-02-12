@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--delta_coeff", default=1.25, type=float)
     parser.add_argument('--output_dir', type=str, default='log/', help='save result logs')
+    parser.add_argument("--epochs", default=30, type=int)
     args = parser.parse_args()
 
     # Step 1: Load the MNIST dataset
@@ -221,7 +222,7 @@ if __name__ == "__main__":
     art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
 
     # Step 5: fit the trainer
-    trainer.fit_generator(art_datagen, nb_epochs=30)
+    trainer.fit_generator(art_datagen, nb_epochs=int(args.epochs))
 
     x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""
