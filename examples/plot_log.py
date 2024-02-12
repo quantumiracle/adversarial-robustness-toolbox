@@ -49,5 +49,5 @@ fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.title('Accuracy after Adversarial Training vs. Delta Coefficient')
 # plt.xscale('log')
 plt.grid()
-plt.savefig('log/diff_delta.png', bbox_inches='tight')
+plt.savefig(f'{log_directory}/diff_delta.png', bbox_inches='tight')
 plt.show()
