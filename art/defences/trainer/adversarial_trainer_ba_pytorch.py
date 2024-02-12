@@ -224,7 +224,12 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
 
         # delta update
         delta_grad = self._classifier.loss_gradient(x_batch + self.delta, y_batch)
-        noise = np.random.normal(loc=0, scale=1, size=delta_grad.shape)
+        # noise = np.random.normal(loc=0, scale=1, size=delta_grad.shape)
+
+        n = x_batch.shape[0]
+        m = np.prod(x_batch.shape[1:]).item()
+        noise = random_sphere(n, m, self._eps, np.inf).reshape(x_batch.shape).astype(ART_NUMPY_DTYPE)
+
         self.delta = np.clip(self.delta + h_delta * delta_grad + np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
 
         # theta update
