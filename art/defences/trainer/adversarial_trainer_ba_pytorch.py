@@ -230,7 +230,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         # m = np.prod(x_batch.shape[1:]).item()
         # noise = random_sphere(n, m, self._eps, np.inf).reshape(x_batch.shape).astype(ART_NUMPY_DTYPE)
 
-        self.delta = np.clip(self.delta + h_delta * delta_grad + 0.05 * np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
+        self.delta = np.clip(self.delta + h_delta * delta_grad + 0.1 * np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
 
         # theta update
         if self._classifier.clip_values is not None:
