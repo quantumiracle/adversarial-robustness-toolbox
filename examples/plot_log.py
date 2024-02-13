@@ -3,7 +3,7 @@ import re
 import matplotlib.pyplot as plt
 
 # Step 1: List all the log files
-log_directory = 'log60'
+log_directory = 'log30_small_noise0.1'
 log_files = [f for f in os.listdir(log_directory) if re.match(r'delta_coeff=.*\.log', f)]
 
 # Dictionaries to hold the extracted data
