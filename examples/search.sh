@@ -9,5 +9,5 @@ for i in "${coefs[@]}"
 do
    echo "Running with coef $i"  &
    # python adversarial_training_BA_mnist.py --delta_coeff "$i"   &
-   python adversarial_training_BA_mnist.py --delta_coeff "$i" --epochs 30 --output_dir 'log30_small_noise/'  &
+   python adversarial_training_BA_mnist.py --delta_coeff "$i" --epochs 30 --output_dir 'log30_small_noise0.1/'  &
 done
