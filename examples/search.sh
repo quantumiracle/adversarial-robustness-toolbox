@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7
+export CUDA_VISIBLE_DEVICES=0
 
 # declare -a coefs=(0.01 0.05 0.1 0.2 0.5 1 1.25 2 3 5) 
 # declare -a coefs=(7 9 10 15 20 50) 
