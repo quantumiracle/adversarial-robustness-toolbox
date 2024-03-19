@@ -219,7 +219,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         h_delta = self.delta_coeff * self._eps
         import torch
 
-        if self._classifier._optimizer is None:  # pylint: disable=W0212
+        if self._classifier._optimizer is None:  
             raise ValueError("Optimizer of classifier is currently None, but is required for adversarial training.")
 
         # delta update
@@ -240,47 +240,47 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
             x_batch_pert = x_batch + self.delta
 
         # Apply preprocessing
-        x_preprocessed, y_preprocessed = self._classifier._apply_preprocessing(  # pylint: disable=W0212
+        x_preprocessed, y_preprocessed = self._classifier._apply_preprocessing(  
             x_batch_pert, y_batch, fit=True
         )
 
         # Check label shape
-        if self._classifier._reduce_labels:  # pylint: disable=W0212
+        if self._classifier._reduce_labels:  
             y_preprocessed = np.argmax(y_preprocessed, axis=1)
 
-        i_batch = torch.from_numpy(x_preprocessed).to(self._classifier._device)  # pylint: disable=W0212
-        o_batch = torch.from_numpy(y_preprocessed).to(self._classifier._device)  # pylint: disable=W0212
+        i_batch = torch.from_numpy(x_preprocessed).to(self._classifier._device)  
+        o_batch = torch.from_numpy(y_preprocessed).to(self._classifier._device)  
 
         # Zero the parameter gradients
-        self._classifier._optimizer.zero_grad()  # pylint: disable=W0212
+        self._classifier._optimizer.zero_grad()  
 
         # Perform prediction
-        model_outputs = self._classifier._model(i_batch)  # pylint: disable=W0212
+        model_outputs = self._classifier._model(i_batch)  
 
         # Form the loss function
-        loss = self._classifier._loss(model_outputs[-1], o_batch)  # pylint: disable=W0212
+        loss = self._classifier._loss(model_outputs[-1], o_batch)  
 
         loss2 = loss.detach() * loss
 
         loss3_matrix = torch.outer(loss.detach(), loss)  # a batch (detached) x batch matrix
         loss3 = torch.mean(loss3_matrix, dim=0) # avg over batch (detached)
 
-        loss = (loss + loss2 + loss3).mean()  # merged loss
+        loss = (loss + loss2 - loss3).mean()  # merged loss
 
-        self._classifier._optimizer.param_groups[0].update(lr=l_r)  # pylint: disable=W0212
+        self._classifier._optimizer.param_groups[0].update(lr=l_r)  
 
         # Actual training
         if self._use_amp:  # pragma: no cover
             from apex import amp  # pylint: disable=E0611
 
-            with amp.scale_loss(loss, self._classifier._optimizer) as scaled_loss:  # pylint: disable=W0212
+            with amp.scale_loss(loss, self._classifier._optimizer) as scaled_loss:  
                 scaled_loss.backward()
         else:
             loss.backward()
 
         # clip the gradients
-        torch.nn.utils.clip_grad_norm_(self._classifier._model.parameters(), 0.5)  # pylint: disable=W0212
-        self._classifier._optimizer.step()  # pylint: disable=W0212
+        torch.nn.utils.clip_grad_norm_(self._classifier._model.parameters(), 0.5)  
+        self._classifier._optimizer.step()  
 
         train_loss = loss.item() * o_batch.size(0)
         train_acc = (model_outputs[0].max(1)[1] == o_batch).sum().item()
