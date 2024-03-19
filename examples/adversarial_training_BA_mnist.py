@@ -205,7 +205,7 @@ if __name__ == "__main__":
     attack = ProjectedGradientDescent(
         classifier,
         norm=np.inf,
-        eps=0.3,
+        eps=0.1,
         eps_step=0.01,
         max_iter=40,
         targeted=False,
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
     # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
     # if you have apex installed, change use_amp to True
-    epsilon = 0.3
+    epsilon = 0.1
     trainer = AdversarialTrainerBAPyTorch(classifier, args.delta_coeff, eps=epsilon, use_amp=False)
 
     # Build a Keras image augmentation object and wrap it in ART
