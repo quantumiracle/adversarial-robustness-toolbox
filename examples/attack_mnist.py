@@ -90,76 +90,75 @@ if __name__ == "__main__":
 
     attack_eps = 0.1
     
-    # attack_types = ['pgd', 'carlini', 'wasserstein', 'auto_pgd']
-    attack_types = ['ba']
-    for attack_type in attack_types:
-        if attack_type == 'pgd':
-            attack = ProjectedGradientDescent(
-                classifier,
-                norm=np.inf,
-                eps=attack_eps,
-                eps_step=0.01,
-                max_iter=40,
-                targeted=False,
-                num_random_init=5,
-                batch_size=32,
-            )
-            
-        elif attack_type == 'carlini':
-            attack = CarliniL2Method(
-                classifier, 
-                confidence=0.0, 
-                targeted=False, 
-                learning_rate=0.01, 
-                max_iter=10, 
-                binary_search_steps=10, 
-                initial_const=0.01, 
-                max_halving=5, 
-                max_doubling=5, 
-                batch_size=32)
+    # attack_types = ['pgd', 'carlini', 'wasserstein', 'auto_pgd', 'ba']
+    # for attack_type in attack_types:
+    if args.attack_type == 'pgd':
+        attack = ProjectedGradientDescent(
+            classifier,
+            norm=np.inf,
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            num_random_init=5,
+            batch_size=32,
+        )
+        
+    elif args.attack_type == 'carlini':
+        attack = CarliniL2Method(
+            classifier, 
+            confidence=0.0, 
+            targeted=False, 
+            learning_rate=0.01, 
+            max_iter=10, 
+            binary_search_steps=10, 
+            initial_const=0.01, 
+            max_halving=5, 
+            max_doubling=5, 
+            batch_size=32)
 
-        elif attack_type == 'wasserstein':
-            attack = Wasserstein(
-                classifier, 
-                eps=attack_eps,
-                eps_step=0.01,
-                max_iter=40,
-                conjugate_sinkhorn_max_iter=40,
-                projected_sinkhorn_max_iter=40,
-                batch_size=32
-                )
-        elif attack_type == 'auto_pgd':
-            attack = AutoProjectedGradientDescent(
-                classifier,
-                norm=np.inf,
-                eps=attack_eps,
-                eps_step=0.01,
-                max_iter=40,
-                targeted=False,
-                nb_random_init=5,
-                batch_size=32,
+    elif args.attack_type == 'wasserstein':
+        attack = Wasserstein(
+            classifier, 
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            conjugate_sinkhorn_max_iter=40,
+            projected_sinkhorn_max_iter=40,
+            batch_size=32
             )
-        elif attack_type == 'ba':
-            attack = BayesianAdversary(
-                classifier,
-                norm=np.inf,
-                eps=args.attack_eps,
-                eps_step=0.01,
-                max_iter=40,
-                targeted=False,
-                num_random_init=5,
-                batch_size=32,
-            )
+    elif args.attack_type == 'auto_pgd':
+        attack = AutoProjectedGradientDescent(
+            classifier,
+            norm=np.inf,
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            nb_random_init=5,
+            batch_size=32,
+        )
+    elif args.attack_type == 'ba':
+        attack = BayesianAdversary(
+            classifier,
+            norm=np.inf,
+            eps=args.attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            num_random_init=5,
+            batch_size=32,
+        )
 
-        x_test_attack = attack.generate(x_test)
-        x_test_attack_pred = np.argmax(classifier.predict(x_test_attack), axis=1)
-        prt2 = f"Accuracy on {attack_type} adversarial samples after adversarial training: \
-            {(np.sum(x_test_attack_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100):.2f}"
-        print(prt2)
-        log_entry += '\n' + prt2
+    x_test_attack = attack.generate(x_test)
+    x_test_attack_pred = np.argmax(classifier.predict(x_test_attack), axis=1)
+    prt2 = f"Accuracy on {args.attack_type} adversarial samples after adversarial training: \
+        {(np.sum(x_test_attack_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100):.2f}"
+    print(prt2)
+    log_entry += '\n' + prt2
         
     # log result
-    log_file_path = os.path.join(args.model_dir, f'attack_eps={attack_eps}_delta_coeff={args.delta_coeff}.log')
+    log_file_path = os.path.join(args.model_dir, f'attack_type={args.attack_type}_attack_eps={attack_eps}_delta_coeff={args.delta_coeff}.log')
 
     # Append the log entry to the file
     with open(log_file_path, "a") as log_file:
