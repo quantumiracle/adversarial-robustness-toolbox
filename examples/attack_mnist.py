@@ -16,7 +16,7 @@ from art.estimators.classification import PyTorchClassifier
 from art.data_generators import PyTorchDataGenerator
 from art.defences.trainer import AdversarialTrainerBAPyTorch
 from art.utils import load_mnist
-from art.attacks.evasion import ProjectedGradientDescent, CarliniL2Method, Wasserstein, AutoProjectedGradientDescent
+from art.attacks.evasion import ProjectedGradientDescent, CarliniL2Method, Wasserstein, AutoProjectedGradientDescent, BayesianAdversary
 from adversarial_training_BA_mnist import PreActResNet18, initialize_weights, MNIST_dataset
 
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     attack_eps = 0.1
     
     # attack_types = ['pgd', 'carlini', 'wasserstein', 'auto_pgd']
-    attack_types = ['auto_pgd']
+    attack_types = ['ba']
     for attack_type in attack_types:
         if attack_type == 'pgd':
             attack = ProjectedGradientDescent(
@@ -137,6 +137,17 @@ if __name__ == "__main__":
                 max_iter=40,
                 targeted=False,
                 nb_random_init=5,
+                batch_size=32,
+            )
+        elif attack_type == 'ba':
+            attack = BayesianAdversary(
+                classifier,
+                norm=np.inf,
+                eps=args.attack_eps,
+                eps_step=0.01,
+                max_iter=40,
+                targeted=False,
+                num_random_init=5,
                 batch_size=32,
             )
 

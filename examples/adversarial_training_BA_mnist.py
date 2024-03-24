@@ -16,7 +16,7 @@ from art.estimators.classification import PyTorchClassifier
 from art.data_generators import PyTorchDataGenerator
 from art.defences.trainer import AdversarialTrainerBAPyTorch
 from art.utils import load_mnist
-from art.attacks.evasion import ProjectedGradientDescent, CarliniL2Method, Wasserstein, AutoProjectedGradientDescent
+from art.attacks.evasion import ProjectedGradientDescent, CarliniL2Method, Wasserstein, AutoProjectedGradientDescent, BayesianAdversary
 
 """
 For this example we choose the PreActResNet model as used in the paper (https://openreview.net/forum?id=BJx040EFvH)
@@ -239,6 +239,18 @@ if __name__ == "__main__":
             max_iter=40,
             targeted=False,
             nb_random_init=5,
+            batch_size=32,
+        )
+
+    elif args.attack_type == 'ba':
+        attack = BayesianAdversary(
+            classifier,
+            norm=np.inf,
+            eps=args.attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            num_random_init=5,
             batch_size=32,
         )
 

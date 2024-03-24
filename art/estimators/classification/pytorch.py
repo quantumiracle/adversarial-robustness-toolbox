@@ -1066,6 +1066,31 @@ class PyTorchClassifier(ClassGradientsMixin, ClassifierMixin, PyTorchEstimator):
             logger.info("Optimizer state dict saved in path: %s.", full_path + ".optimizer")
         logger.info("Model state dict saved in path: %s.", full_path + ".model")
 
+    def load(self, filename: str, path: Optional[str] = None) -> None:
+        """
+        Load a model from file in the format specific to the backend framework.
+
+        :param filename: Name of the file where to load the model.
+        :param path: Path of the folder where to load the model. If no path is specified, the model will be loaded from
+                     the default data location of the library `ART_DATA_PATH`.
+        """
+        import torch
+
+        if path is None:
+            full_path = os.path.join(config.ART_DATA_PATH, filename)
+        else:
+            full_path = os.path.join(path, filename)
+
+        # pylint: disable=W0212
+        # disable pylint because access to _model required
+        self._model._model.load_state_dict(torch.load(full_path + ".model"))
+        self._model.eval()
+        self._model.to(self._device)
+        logger.info("Model loaded from path: %s.", full_path + ".model")
+
+        if os.path.isfile(full_path + ".optimizer"):
+            self._optimizer.load_state_dict(torch.load(full_path + ".optimizer"))
+
     def __getstate__(self) -> Dict[str, Any]:
         """
         Use to ensure `PyTorchClassifier` can be pickled.
