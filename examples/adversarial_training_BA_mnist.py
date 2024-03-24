@@ -16,7 +16,7 @@ from art.estimators.classification import PyTorchClassifier
 from art.data_generators import PyTorchDataGenerator
 from art.defences.trainer import AdversarialTrainerBAPyTorch
 from art.utils import load_mnist
-from art.attacks.evasion import ProjectedGradientDescent
+from art.attacks.evasion import ProjectedGradientDescent, CarliniL2Method, Wasserstein, AutoProjectedGradientDescent
 
 """
 For this example we choose the PreActResNet model as used in the paper (https://openreview.net/forum?id=BJx040EFvH)
@@ -151,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--delta_coeff", default=1.25, type=float)
     parser.add_argument('--output_dir', type=str, default='log/', help='save result logs')
     parser.add_argument("--epochs", default=30, type=int)
+    parser.add_argument("--attack_type", default='pgd', type=str)  # ['pgd', 'carlini', 'wasserstein', 'auto_pgd']
     args = parser.parse_args()
 
     # Step 1: Load the MNIST dataset
@@ -202,16 +203,44 @@ if __name__ == "__main__":
         nb_classes=10,
     )
 
-    attack = ProjectedGradientDescent(
-        classifier,
-        norm=np.inf,
-        eps=0.1,
-        eps_step=0.01,
-        max_iter=40,
-        targeted=False,
-        num_random_init=5,
-        batch_size=32,
-    )
+    attack_eps = 0.1
+
+    if args.attack_type == 'pgd':
+        attack = ProjectedGradientDescent(
+            classifier,
+            norm=np.inf,
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            num_random_init=5,
+            batch_size=32,
+        )
+        
+    elif args.attack_type == 'carlini':
+        attack = CarliniL2Method(classifier, confidence=0.0, targeted=False, learning_rate=0.01, max_iter=10, binary_search_steps=10, initial_const=0.01, max_halving=5, max_doubling=5, batch_size=1)
+
+    elif args.attack_type == 'wasserstein':
+        attack = Wasserstein(
+            classifier, 
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            conjugate_sinkhorn_max_iter=40,
+            projected_sinkhorn_max_iter=40,
+            )
+        
+    elif args.attack_type == 'auto_pgd':
+        attack = AutoProjectedGradientDescent(
+            classifier,
+            norm=np.inf,
+            eps=attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            nb_random_init=5,
+            batch_size=32,
+        )
 
     # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
     # if you have apex installed, change use_amp to True
@@ -224,6 +253,11 @@ if __name__ == "__main__":
     # Step 5: fit the trainer
     trainer.fit_generator(art_datagen, nb_epochs=int(args.epochs))
 
+    # save trained model
+    os.makedirs(args.output_dir, exist_ok=True)
+    classifier.save(filename='ba_mnist', path=args.output_dir)
+    print(f"Save model to {args.output_dir}/ba_mnist")
+
     x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""
     prt1 = f"Accuracy on benign test samples after adversarial training: \
@@ -233,13 +267,12 @@ if __name__ == "__main__":
 
     x_test_attack = attack.generate(x_test)
     x_test_attack_pred = np.argmax(classifier.predict(x_test_attack), axis=1)
-    prt2 = f"Accuracy on original PGD adversarial samples after adversarial training: \
+    prt2 = f"Accuracy on {args.attack_type} adversarial samples after adversarial training: \
          {(np.sum(x_test_attack_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100):.2f}"
     print(prt2)
     log_entry += '\n' + prt2
     
     # log result
-    os.makedirs(args.output_dir, exist_ok=True)
     log_file_path = os.path.join(args.output_dir, f'delta_coeff={args.delta_coeff}.log')
 
     # Append the log entry to the file

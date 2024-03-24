@@ -3,13 +3,14 @@ This is an example of how to use ART for adversarial training of a model with Fa
 """
 import math
 from PIL import Image
-
+import os
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
+import argparse
 
 from art.estimators.classification import PyTorchClassifier
 from art.data_generators import PyTorchDataGenerator
@@ -144,87 +145,96 @@ class MNIST_dataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output_dir', type=str, default='log/', help='save result logs')
+    args = parser.parse_args()
 
-# Step 1: Load the CIFAR10 dataset
-(x_train, y_train), (x_test, y_test), min_pixel_value, max_pixel_value = load_mnist()
+    # Step 1: Load the CIFAR10 dataset
+    (x_train, y_train), (x_test, y_test), min_pixel_value, max_pixel_value = load_mnist()
 
-x_train = x_train.transpose(0, 3, 1, 2).astype("float32")
-x_test = x_test.transpose(0, 3, 1, 2).astype("float32")
+    x_train = x_train.transpose(0, 3, 1, 2).astype("float32")
+    x_test = x_test.transpose(0, 3, 1, 2).astype("float32")
 
-transform = transforms.Compose(
-    # [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
-    [transforms.ToTensor()]
-)
+    transform = transforms.Compose(
+        # [transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor()]
+        [transforms.ToTensor()]
+    )
 
-dataset = MNIST_dataset(x_train, y_train, transform=transform)
-dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
+    dataset = MNIST_dataset(x_train, y_train, transform=transform)
+    dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
 
-# Step 2: create the PyTorch model
-model = PreActResNet18(in_channel=1)
-# For running on GPU replace the model with the
-# model = PreActResNet18().cuda()
+    # Step 2: create the PyTorch model
+    model = PreActResNet18(in_channel=1)
+    # For running on GPU replace the model with the
+    # model = PreActResNet18().cuda()
 
-model.apply(initialize_weights)
-model.train()
+    model.apply(initialize_weights)
+    model.train()
 
-opt = torch.optim.SGD(model.parameters(), lr=0.21, momentum=0.9, weight_decay=5e-4)
+    opt = torch.optim.SGD(model.parameters(), lr=0.21, momentum=0.9, weight_decay=5e-4)
 
-# if you have apex installed, the following line should be uncommented for faster processing
-# import apex.amp as amp
-# model, opt = amp.initialize(model, opt, opt_level="O2", loss_scale=1.0, master_weights=False)
+    # if you have apex installed, the following line should be uncommented for faster processing
+    # import apex.amp as amp
+    # model, opt = amp.initialize(model, opt, opt_level="O2", loss_scale=1.0, master_weights=False)
 
-criterion = nn.CrossEntropyLoss()
-# Step 3: Create the ART classifier
-
-
-mnist_mu = np.ones((1, 28, 28))
-mnist_mu[0, :, :] = 0.1307
-
-mnist_std = np.ones((1, 28, 28))
-mnist_std[0, :, :] = 0.3081
+    criterion = nn.CrossEntropyLoss()
+    # Step 3: Create the ART classifier
 
 
-classifier = PyTorchClassifier(
-    model=model,
-    clip_values=(0.0, 1.0),
-    preprocessing=(mnist_mu, mnist_std),
-    loss=criterion,
-    optimizer=opt,
-    input_shape=(1, 28, 28),
-    nb_classes=10,
-)
+    mnist_mu = np.ones((1, 28, 28))
+    mnist_mu[0, :, :] = 0.1307
 
-attack = ProjectedGradientDescent(
-    classifier,
-    norm=np.inf,
-    eps=0.1,
-    eps_step=0.01,
-    max_iter=40,
-    targeted=False,
-    num_random_init=5,
-    batch_size=32,
-)
+    mnist_std = np.ones((1, 28, 28))
+    mnist_std[0, :, :] = 0.3081
 
-# Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
-# if you have apex installed, change use_amp to True
-epsilon = 0.1
-trainer = AdversarialTrainerFBFPyTorch(classifier, eps=epsilon, use_amp=False)
 
-# Build a Keras image augmentation object and wrap it in ART
-art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
+    classifier = PyTorchClassifier(
+        model=model,
+        clip_values=(0.0, 1.0),
+        preprocessing=(mnist_mu, mnist_std),
+        loss=criterion,
+        optimizer=opt,
+        input_shape=(1, 28, 28),
+        nb_classes=10,
+    )
 
-# Step 5: fit the trainer
-trainer.fit_generator(art_datagen, nb_epochs=30)
+    attack = ProjectedGradientDescent(
+        classifier,
+        norm=np.inf,
+        eps=0.1,
+        eps_step=0.01,
+        max_iter=40,
+        targeted=False,
+        num_random_init=5,
+        batch_size=32,
+    )
 
-x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
-print(
-    "Accuracy on benign test samples after adversarial training: %.2f%%"
-    % (np.sum(x_test_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100)
-)
+    # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
+    # if you have apex installed, change use_amp to True
+    epsilon = 0.1
+    trainer = AdversarialTrainerFBFPyTorch(classifier, eps=epsilon, use_amp=False)
 
-x_test_attack = attack.generate(x_test)
-x_test_attack_pred = np.argmax(classifier.predict(x_test_attack), axis=1)
-print(
-    "Accuracy on original PGD adversarial samples after adversarial training: %.2f%%"
-    % (np.sum(x_test_attack_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100)
-)
+    # Build a Keras image augmentation object and wrap it in ART
+    art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
+
+    # Step 5: fit the trainer
+    trainer.fit_generator(art_datagen, nb_epochs=30)
+
+    # save trained model
+    os.makedirs(args.output_dir, exist_ok=True)
+    classifier.save(filename='fbf_mnist', path=args.output_dir)
+    print(f"Save model to {args.output_dir}/fbf_mnist")
+
+    x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
+    print(
+        "Accuracy on benign test samples after adversarial training: %.2f%%"
+        % (np.sum(x_test_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100)
+    )
+
+    x_test_attack = attack.generate(x_test)
+    x_test_attack_pred = np.argmax(classifier.predict(x_test_attack), axis=1)
+    print(
+        "Accuracy on original PGD adversarial samples after adversarial training: %.2f%%"
+        % (np.sum(x_test_attack_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100)
+    )

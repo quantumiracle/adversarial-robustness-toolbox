@@ -13,3 +13,8 @@ do
    # python adversarial_training_BA_mnist.py --delta_coeff "$i"   &
    python adversarial_training_BA_mnist.py --delta_coeff "$i" --epochs 30 --output_dir 'log30_iter_delta_eps0.2/' >> log/$timestamp.log 2>&1 &
 done
+
+# echo "Running BA mnist" &
+# python adversarial_training_BA_mnist.py --delta_coeff 10 --epochs 30 --output_dir 'log_ba/' >> log/$timestamp.log 2>&1 &
+# echo "Running FBF mnist" &
+# python adversarial_training_FBF_mnist.py --output_dir 'log_fbf/' >> log/$timestamp.log 2>&1 &
