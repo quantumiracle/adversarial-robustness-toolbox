@@ -216,13 +216,18 @@ if __name__ == "__main__":
     # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
     # if you have apex installed, change use_amp to True
     epsilon = 8.0 / 255.0
-    trainer = AdversarialTrainerBAPyTorch(classifier, eps=epsilon, use_amp=False)
+    trainer = AdversarialTrainerBAPyTorch(classifier, 1.0, eps=epsilon, use_amp=False)
 
     # Build a Keras image augmentation object and wrap it in ART
     art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
 
     # Step 5: fit the trainer
     trainer.fit_generator(art_datagen, nb_epochs=int(args.epochs))
+
+    # save trained model
+    os.makedirs(args.output_dir, exist_ok=True)
+    classifier.save(filename='ba_cifar10', path=args.output_dir)
+    print(f"Save model to {args.output_dir}/ba_cifar10")
 
     x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""

@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--delta_coeff", default=1.25, type=float)
     parser.add_argument('--model_dir', type=str, default='log/', help='save result logs')
+    parser.add_argument('--method', type=str, default='fbf', help='save result logs')
     parser.add_argument("--attack_type", default='pgd', type=str)  # ['pgd', 'carlini', 'wasserstein', 'auto_pgd']
     parser.add_argument("--attack_eps", default=0.1, type=float)
     args = parser.parse_args()
@@ -78,15 +79,15 @@ if __name__ == "__main__":
         nb_classes=10,
     )
 
-    classifier.load(filename='ba_mnist', path=args.model_dir)
-    print(f"Load model from {args.model_dir}/ba_mnist")
+    classifier.load(filename=f'{args.method}_mnist', path=args.model_dir)
+    print(f"Load model from {args.model_dir}/{args.method}_mnist")
 
-    # x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
+    x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""
-    # prt1 = f"Accuracy on benign test samples after adversarial training: \
-    #          {(np.sum(x_test_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100):.2f}"
-    # print(prt1)
-    # log_entry += prt1
+    prt1 = f"Accuracy on benign test samples after adversarial training: \
+             {(np.sum(x_test_pred == np.argmax(y_test, axis=1)) / x_test.shape[0] * 100):.2f}"
+    print(prt1)
+    log_entry += prt1
 
     attack_eps = 0.1
     
