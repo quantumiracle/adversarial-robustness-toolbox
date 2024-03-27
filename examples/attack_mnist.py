@@ -142,13 +142,26 @@ if __name__ == "__main__":
     elif args.attack_type == 'ba':
         attack = BayesianAdversary(
             classifier,
-            norm=np.inf,
+            norm=2,  # inf norm takes sign of grad
             eps=args.attack_eps,
             eps_step=0.01,
             max_iter=40,
             targeted=False,
             num_random_init=5,
             batch_size=32,
+            mean_attack=False,
+        )
+    elif args.attack_type == 'ba_mean':
+        attack = BayesianAdversary(
+            classifier,
+            norm=2,  # inf norm takes sign of grad
+            eps=args.attack_eps,
+            eps_step=0.01,
+            max_iter=40,
+            targeted=False,
+            num_random_init=5,
+            batch_size=32,
+            mean_attack=True, # if True, take mean of inner loop as attacking perturbation
         )
 
     x_test_attack = attack.generate(x_test)
