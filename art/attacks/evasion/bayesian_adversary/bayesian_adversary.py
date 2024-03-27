@@ -68,6 +68,7 @@ class BayesianAdversary(EvasionAttack):
         "targeted",
         "num_random_init",
         "batch_size",
+        "mean_attack",
         "max_iter",
         "random_eps",
         "summary_writer",
@@ -87,6 +88,7 @@ class BayesianAdversary(EvasionAttack):
         targeted: bool = False,
         num_random_init: int = 0,
         batch_size: int = 32,
+        mean_attack: bool = False,
         random_eps: bool = False,
         summary_writer: Union[str, bool, SummaryWriter] = False,
         verbose: bool = True,
@@ -126,6 +128,7 @@ class BayesianAdversary(EvasionAttack):
         self.targeted = targeted
         self.num_random_init = num_random_init
         self.batch_size = batch_size
+        self.mean_attack = mean_attack
         self.random_eps = random_eps
         self.verbose = verbose
         BayesianAdversary._check_params(self)
@@ -144,13 +147,14 @@ class BayesianAdversary(EvasionAttack):
                 targeted=targeted,
                 num_random_init=num_random_init,
                 batch_size=batch_size,
+                mean_attack=mean_attack,
                 random_eps=random_eps,
                 summary_writer=summary_writer,
                 verbose=verbose,
             )
 
         elif isinstance(self.estimator, TensorFlowV2Classifier) and self.estimator.all_framework_preprocessing:
-            self._attack = ProjectedGradientDescentTensorFlowV2(
+            self._attack = ProjectedGradientDescentTensorFlowV2(  # TODO
                 estimator=estimator,  # type: ignore
                 norm=norm,
                 eps=eps,
@@ -165,7 +169,7 @@ class BayesianAdversary(EvasionAttack):
                 verbose=verbose,
             )
 
-        else:
+        else: # TODO
             self._attack = ProjectedGradientDescentNumpy(
                 estimator=estimator,
                 norm=norm,

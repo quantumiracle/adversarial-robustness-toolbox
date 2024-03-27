@@ -70,6 +70,7 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         targeted: bool = False,
         num_random_init: int = 0,
         batch_size: int = 32,
+        mean_attack: bool = False,
         inner_loop: int = 10,
         random_eps: bool = False,
         summary_writer: Union[str, bool, SummaryWriter] = False,
@@ -126,6 +127,7 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         self._batch_id = 0
         self._i_max_iter = 0
         self.inner_loop = inner_loop
+        self.mean_attack = mean_attack
 
     def generate(self, x: np.ndarray, y: Optional[np.ndarray] = None, **kwargs) -> np.ndarray:
         """
@@ -279,11 +281,20 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         if mask is not None:
             mask = mask.to(self.estimator.device)
 
+
+        if self.mean_attack:
+            # track the adv_x and return mean over iters at end
+            adv_x_list = []
+
         for i_max_iter in range(self.max_iter):
             self._i_max_iter = i_max_iter
             adv_x = self._compute_pytorch(
                 adv_x, inputs, targets, mask, eps, eps_step, self.num_random_init > 0 and i_max_iter == 0, momentum
             )
+            adv_x_list.append(adv_x)
+
+        if self.mean_attack:
+            adv_x = torch.stack(adv_x_list).mean(dim=0)
 
         return adv_x.cpu().detach().numpy()
 
@@ -310,10 +321,6 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
 
         # Get gradient wrt loss; invert it if attack is targeted
         grad = self.estimator.loss_gradient(x=x, y=y) * (1 - 2 * int(self.targeted))
-
-        # Add noise, only for Bayesian attack
-        noise = torch.randn_like(grad, dtype=torch.float) 
-        grad += torch.sqrt(torch.tensor(eps_step)) * noise
 
         # Write summary
         if self.summary_writer is not None:  # pragma: no cover
@@ -378,7 +385,11 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         eps_step = np.array(eps_step, dtype=ART_NUMPY_DTYPE)
         perturbation_step = torch.tensor(eps_step).to(self.estimator.device) * perturbation
         perturbation_step[torch.isnan(perturbation_step)] = 0
-        x = x + perturbation_step
+        
+        # Add noise, only for Bayesian attack
+        noise = torch.sqrt(torch.tensor(eps_step).to(self.estimator.device)) * torch.randn_like(perturbation_step, dtype=torch.float) 
+
+        x = x + perturbation_step + noise
         if self.estimator.clip_values is not None:
             clip_min, clip_max = self.estimator.clip_values
             x = torch.max(
@@ -441,12 +452,11 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         else:
             x_adv = x
 
-        for self.inner_loop in range(self.inner_loop):
-            # Get perturbation
-            perturbation = self._compute_perturbation_pytorch(x_adv, y, mask, momentum, eps_step)
+        # Get perturbation
+        perturbation = self._compute_perturbation_pytorch(x_adv, y, mask, momentum, eps_step)
 
-            # Apply perturbation and clip
-            x_adv = self._apply_perturbation_pytorch(x_adv, perturbation, eps_step).detach()  # detach() break gradient to last step
+        # Apply perturbation and clip
+        x_adv = self._apply_perturbation_pytorch(x_adv, perturbation, eps_step).detach()  # detach() break gradient to last step
 
         # Do projection
         perturbation = self._projection(x_adv - x_init, eps, self.norm)
