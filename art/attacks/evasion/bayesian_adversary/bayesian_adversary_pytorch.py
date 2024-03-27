@@ -282,9 +282,8 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
             mask = mask.to(self.estimator.device)
 
 
-        if self.mean_attack:
-            # track the adv_x and return mean over iters at end
-            adv_x_list = []
+        # track the adv_x and return mean over iters at end
+        adv_x_list = []
 
         for i_max_iter in range(self.max_iter):
             self._i_max_iter = i_max_iter
