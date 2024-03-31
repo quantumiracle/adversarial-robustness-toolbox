@@ -267,8 +267,9 @@ if __name__ == "__main__":
 
     # save trained model
     os.makedirs(args.output_dir, exist_ok=True)
-    classifier.save(filename='ba_mnist', path=args.output_dir)
-    print(f"Save model to {args.output_dir}/ba_mnist")
+    file_name = f"ba_mnist_delta-coeff={args.delta_coeff}"
+    classifier.save(filename=file_name, path=args.output_dir)
+    print(f"Save model to {args.output_dir}/{file_name}")
 
     x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""
