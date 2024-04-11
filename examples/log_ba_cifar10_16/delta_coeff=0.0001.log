@@ -1,0 +1,2 @@
+Accuracy on benign test samples after adversarial training:                 66.41
+Accuracy on original PGD adversarial samples after adversarial training:                 8.19
