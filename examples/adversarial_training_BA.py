@@ -148,6 +148,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--output_dir', type=str, default='log/', help='save result logs')
     parser.add_argument("--epochs", default=30, type=int)
+    parser.add_argument("--delta_coeff", default=1.25, type=float)
     args = parser.parse_args()
 
     # Step 1: Load the CIFAR10 dataset
@@ -216,7 +217,7 @@ if __name__ == "__main__":
     # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
     # if you have apex installed, change use_amp to True
     epsilon = 8.0 / 255.0
-    trainer = AdversarialTrainerBAPyTorch(classifier, 1.0, eps=epsilon, use_amp=False)
+    trainer = AdversarialTrainerBAPyTorch(classifier, args.delta_coeff, eps=epsilon, use_amp=False)
 
     # Build a Keras image augmentation object and wrap it in ART
     art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
@@ -226,8 +227,9 @@ if __name__ == "__main__":
 
     # save trained model
     os.makedirs(args.output_dir, exist_ok=True)
-    classifier.save(filename='ba_cifar10', path=args.output_dir)
-    print(f"Save model to {args.output_dir}/ba_cifar10")
+    file_name = f"ba_cifar10_delta-coeff={args.delta_coeff}"
+    classifier.save(filename=file_name, path=args.output_dir)
+    print(f"Save model to {args.output_dir}/{file_name}")
 
     x_test_pred = np.argmax(classifier.predict(x_test), axis=1)
     log_entry = ""
@@ -244,7 +246,7 @@ if __name__ == "__main__":
     log_entry += '\n' + prt2
     
     # log result
-    log_file_path = os.path.join(args.output_dir, f'results.log')
+    log_file_path = os.path.join(args.output_dir, f'delta_coeff={args.delta_coeff}.log')
 
     # Append the log entry to the file
     with open(log_file_path, "a") as log_file:

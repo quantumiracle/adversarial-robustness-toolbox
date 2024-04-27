@@ -11,7 +11,7 @@ for i in "${coefs[@]}"
 do
    echo "Running with coef $i"  &
    # python adversarial_training_BA_mnist.py --delta_coeff "$i"   &
-   python adversarial_training_BA_mnist.py --delta_coeff "$i" --epochs 30 --output_dir 'log_inner1000_ba0/' >> log/$timestamp.log 2>&1 &
+   python adversarial_training_BA_mnist.py --delta_coeff "$i" --epochs 30 --output_dir 'log_ba_no_noise/' >> log/$timestamp.log 2>&1 &
 done
 
 # for i in {0..2}; do
