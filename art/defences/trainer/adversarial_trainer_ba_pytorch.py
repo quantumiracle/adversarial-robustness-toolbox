@@ -52,7 +52,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         time making this one of the fastest adversarial training protocol.
     """
 
-    def __init__(self, classifier: "PyTorchClassifier", delta_coeff, eps: Union[int, float] = 8, use_amp: bool = False):
+    def __init__(self, classifier: "PyTorchClassifier", delta_coeff, gamma=1, eps: Union[int, float] = 8, use_amp: bool = False):
         """
         Create an :class:`.AdversarialTrainerBAPyTorch` instance.
 
@@ -64,6 +64,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         self._classifier: "PyTorchClassifier"
         self._use_amp = use_amp
         self.delta_coeff = delta_coeff
+        self.gamma = gamma
 
     def fit(
         self,

@@ -149,6 +149,7 @@ class MNIST_dataset(Dataset):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--delta_coeff", default=1.25, type=float)
+    parser.add_argument("--gamma", default=1.0, type=float)
     parser.add_argument('--output_dir', type=str, default='log/', help='save result logs')
     parser.add_argument("--epochs", default=30, type=int)
     parser.add_argument("--attack_type", default='pgd', type=str)  # ['pgd', 'carlini', 'wasserstein', 'auto_pgd']
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     # Step 4: Create the trainer object - AdversarialTrainerFBFPyTorch
     # if you have apex installed, change use_amp to True
     epsilon = 0.2
-    trainer = AdversarialTrainerBAPyTorch(classifier, args.delta_coeff, eps=epsilon, use_amp=False)
+    trainer = AdversarialTrainerBAPyTorch(classifier, args.delta_coeff, gamma=args.gamma, eps=epsilon, use_amp=False)
 
     # Build a Keras image augmentation object and wrap it in ART
     art_datagen = PyTorchDataGenerator(iterator=dataloader, size=x_train.shape[0], batch_size=128)
@@ -267,7 +268,7 @@ if __name__ == "__main__":
 
     # save trained model
     os.makedirs(args.output_dir, exist_ok=True)
-    file_name = f"ba_mnist_delta-coeff={args.delta_coeff}"
+    file_name = f"ba_mnist_delta-coeff={args.delta_coeff}_gamma={args.gamma}"
     classifier.save(filename=file_name, path=args.output_dir)
     print(f"Save model to {args.output_dir}/{file_name}")
 
@@ -286,7 +287,7 @@ if __name__ == "__main__":
     log_entry += '\n' + prt2
     
     # log result
-    log_file_path = os.path.join(args.output_dir, f'delta_coeff={args.delta_coeff}.log')
+    log_file_path = os.path.join(args.output_dir, f'delta_coeff={args.delta_coeff}_gamma={args.gamma}.log')
 
     # Append the log entry to the file
     with open(log_file_path, "a") as log_file:
