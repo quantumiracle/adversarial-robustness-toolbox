@@ -232,8 +232,8 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
             # m = np.prod(x_batch.shape[1:]).item()
             # noise = random_sphere(n, m, self._eps, np.inf).reshape(x_batch.shape).astype(ART_NUMPY_DTYPE)
 
-            self.delta = np.clip(self.delta + h_delta * delta_grad + np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
-
+            self.delta = np.clip(self.delta + h_delta * delta_grad + self.gamma * np.sqrt(2*h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
+            
         # theta update
         if self._classifier.clip_values is not None:
             x_batch_pert = np.clip(x_batch + self.delta, self._classifier.clip_values[0], self._classifier.clip_values[1])
@@ -266,7 +266,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         loss3_matrix = torch.outer(loss.detach(), loss)  # a batch (detached) x batch matrix
         loss3 = torch.mean(loss3_matrix, dim=0) # avg over batch (detached)
 
-        loss = (loss + loss2 - loss3).mean()  # merged loss
+        loss = (loss + torch.tensor(self.gamma) * (loss2 - loss3)).mean()  # merged loss
 
         self._classifier._optimizer.param_groups[0].update(lr=l_r)  
 
