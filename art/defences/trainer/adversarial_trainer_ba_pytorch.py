@@ -52,7 +52,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         time making this one of the fastest adversarial training protocol.
     """
 
-    def __init__(self, classifier: "PyTorchClassifier", delta_coeff, eps: Union[int, float] = 8, use_amp: bool = False):
+    def __init__(self, classifier: "PyTorchClassifier", delta_coeff, gamma=1, eps: Union[int, float] = 8, use_amp: bool = False):
         """
         Create an :class:`.AdversarialTrainerBAPyTorch` instance.
 
@@ -64,6 +64,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
         self._classifier: "PyTorchClassifier"
         self._use_amp = use_amp
         self.delta_coeff = delta_coeff
+        self.gamma = gamma
 
     def fit(
         self,
@@ -231,7 +232,7 @@ class AdversarialTrainerBAPyTorch(AdversarialTrainerFBF):
             # m = np.prod(x_batch.shape[1:]).item()
             # noise = random_sphere(n, m, self._eps, np.inf).reshape(x_batch.shape).astype(ART_NUMPY_DTYPE)
 
-            self.delta = np.clip(self.delta + h_delta * delta_grad + np.sqrt(h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
+            self.delta = np.clip(self.delta + h_delta * delta_grad + np.sqrt(2*h_delta) * noise, -self._eps, +self._eps).astype(np.float32)
             
         # theta update
         if self._classifier.clip_values is not None:

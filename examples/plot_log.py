@@ -3,7 +3,7 @@ import re
 import matplotlib.pyplot as plt
 
 # Step 1: List all the log files
-log_directory = 'log30_iter_delta_eps0.6'
+log_directory = 'log30_iter_delta_eps0.2'
 log_files = [f for f in os.listdir(log_directory) if re.match(r'delta_coeff=.*\.log', f)]
 
 # Dictionaries to hold the extracted data
@@ -18,7 +18,8 @@ for log_file in log_files:
         content = file.read()
         benign_accuracy_match = re.search(r'Accuracy on benign test samples after adversarial training:\s+([\d.]+)', content)
         adversarial_accuracy_match = re.search(r'Accuracy on original PGD adversarial samples after adversarial training:\s+([\d.]+)', content)
-        
+        # adversarial_accuracy_match = re.search(r'Accuracy on pgd adversarial samples after adversarial training:\s+([\d.]+)', content)
+
         if benign_accuracy_match:
             benign_accuracies[delta_coeff] = float(benign_accuracy_match.group(1))
         if adversarial_accuracy_match:
@@ -47,7 +48,7 @@ ax2.tick_params(axis='y', labelcolor=color)
 
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.title('Accuracy after Adversarial Training vs. Delta Coefficient')
-# plt.xscale('log')
+plt.xscale('log')
 plt.grid()
 plt.savefig(f'{log_directory}/diff_delta.png', bbox_inches='tight')
 plt.show()

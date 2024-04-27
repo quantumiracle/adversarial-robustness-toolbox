@@ -386,7 +386,7 @@ class BayesianAdversaryPyTorch(ProjectedGradientDescentCommon):
         perturbation_step[torch.isnan(perturbation_step)] = 0
         
         # Add noise, only for Bayesian attack
-        noise = torch.sqrt(torch.tensor(eps_step).to(self.estimator.device)) * torch.randn_like(perturbation_step, dtype=torch.float) 
+        noise = torch.sqrt(torch.tensor(2*eps_step).to(self.estimator.device)) * torch.randn_like(perturbation_step, dtype=torch.float) 
 
         x = x + perturbation_step + noise
         if self.estimator.clip_values is not None:
